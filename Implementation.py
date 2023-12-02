@@ -46,7 +46,7 @@ show()
 # Catching the Frauds
 
 mappings = som.win_map(X)
-frauds = np.concatenate((mappings[(8,8)], mappings[(2,2)]), axis = 0)
+frauds = np.concatenate((mappings[(1,8)], mappings[(5,2)], mappings[(8,6)]), axis = 0)
 
 frauds = scaler.inverse_transform(frauds)
 
@@ -58,4 +58,39 @@ frauds = scaler.inverse_transform(frauds)
 customers = dataset.iloc[:,1:].values
 
 # Creating the target variable
+
+is_fraud = np.zeros(len(dataset))
+
+
+for i in range(len(dataset)):
+    if dataset.iloc[i,0] in frauds:
+        is_fraud[i] = 1
+        
+
+
+### Building the ANN Model
+
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+customers = sc.fit_transform(customers)
+
+
+from keras.models import Sequential
+from keras.layers import Dense
+
+model = Sequential()
+model.add(Dense(units = 6, kernel_initializer='uniform', activation = 'relu', input_dim = 15))
+model.add(Dense(units = 6, kernel_initializer='uniform', activation = 'relu'))
+model.add(Dense(units = 1, kernel_initializer='uniform', activation = 'sigmoid'))
+model.compile(optimizer = 'adam', loss='binary_crossentropy', metrics = ['accuracy'])
+
+model.fit(customers, is_fraud, batch_size=5, epochs=10)
+
+### Predicting the Probabilities of frauds
+
+predicted = model.predict(customers)
+
+predicted_sorted = np.concatenate((dataset.iloc[:,0:1].values,predicted),axis = 1)
+predicted_sorted = predicted_sorted[predicted_sorted[:,1].argsort()]
+
 
